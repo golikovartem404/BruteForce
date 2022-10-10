@@ -52,27 +52,31 @@ class MainViewController: UIViewController {
         let button = UIButton(type: .system)
         button.setTitle("Reset", for: .normal)
         button.setTitleColor(UIColor.systemBlue, for:   .normal)
+        button.addTarget(self, action: #selector(reset), for: .touchUpInside)
         return button
     }()
 
     private lazy var startBruteForceButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Start", for: .normal)
-        button.setTitleColor(UIColor.systemBlue, for:   .normal)
+        button.setTitleColor(UIColor.systemBlue, for: .normal)
+        button.addTarget(self, action: #selector(startBruteForce), for: .touchUpInside)
         return button
     }()
 
     private lazy var stopBruteForceButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Stop", for: .normal)
-        button.setTitleColor(UIColor.systemBlue, for:   .normal)
+        button.setTitleColor(UIColor.systemBlue, for: .normal)
+        button.addTarget(self, action: #selector(stopBruteForce), for: .touchUpInside)
         return button
     }()
 
     private lazy var changeBackgroundColorButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Change color", for: .normal)
-        button.setTitleColor(UIColor.systemBlue, for:   .normal)
+        button.setTitleColor(UIColor.systemBlue, for: .normal)
+        button.addTarget(self, action: #selector(changeColor), for: .touchUpInside)
         return button
     }()
 
@@ -132,7 +136,7 @@ class MainViewController: UIViewController {
         }
     }
 
-    @objc func reset() {
+    @objc private func reset() {
         passwordLabel.text = ""
         passwordLabel.textColor = .black
         passwordTextField.isSecureTextEntry = true
@@ -140,7 +144,7 @@ class MainViewController: UIViewController {
         stoppedBruteForce = false
     }
 
-    @objc func startBruteForce() {
+    @objc private func startBruteForce() {
         if passwordTextField.text == "" {
             let alert = UIAlertController(title: "Error",
                                           message: "Please write password!",
@@ -164,57 +168,69 @@ class MainViewController: UIViewController {
         }
     }
 
-    @objc func stopBruteForce() {
+    @objc private func stopBruteForce() {
         stoppedBruteForce = true
         self.passwordBruteForceProgress.isHidden = true
         self.passwordBruteForceProgress.stopAnimating()
     }
 
-    @objc func changeColor() {
+    @objc private func changeColor() {
         isBlack.toggle()
     }
 
-    func bruteForce(passwordToUnlock: String) {
+    private func bruteForce(passwordToUnlock: String) {
 
-        let ALLOWED_CHARACTERS:   [String] = String().printable.map { String($0) }
-
+        let ALLOWED_CHARACTERS: [String] = String().printable.map { String($0) }
         var password: String = ""
 
-        // Will strangely ends at 0000 instead of ~~~
-        while password != passwordToUnlock { // Increase MAXIMUM_PASSWORD_SIZE value for more
+        while password != passwordToUnlock {
+            if stoppedBruteForce {
+                DispatchQueue.main.async {
+                    self.passwordLabel.text = "Password \n\(self.passwordTextField.text ?? "")\n not found"
+                    self.passwordLabel.textColor = .systemRed
+                }
+                break
+            }
             password = generateBruteForce(password, fromArray: ALLOWED_CHARACTERS)
-//             Your stuff here
             print(password)
-            // Your stuff here
+            DispatchQueue.main.async {
+                self.passwordLabel.text = password
+            }
         }
 
-        print(password)
+        if !stoppedBruteForce {
+            DispatchQueue.main.async {
+                self.passwordLabel.text = "Password is found:\n\(password)"
+                self.passwordLabel.textColor = .systemGreen
+                self.passwordTextField.isSecureTextEntry = false
+                self.passwordBruteForceProgress.isHidden = true
+                self.passwordBruteForceProgress.stopAnimating()
+            }
+        }
     }
 
-    func indexOf(character: Character, _ array: [String]) -> Int {
+    private func indexOf(character: Character, _ array: [String]) -> Int {
         return array.firstIndex(of: String(character))!
     }
 
-    func characterAt(index: Int, _ array: [String]) -> Character {
+    private func characterAt(index: Int, _ array: [String]) -> Character {
         return index < array.count ? Character(array[index])
                                    : Character("")
     }
 
-    func generateBruteForce(_ string: String, fromArray array: [String]) -> String {
+    private func generateBruteForce(_ string: String, fromArray array: [String]) -> String {
+
         var str: String = string
 
         if str.count <= 0 {
             str.append(characterAt(index: 0, array))
-        }
-        else {
+        } else {
             str.replace(at: str.count - 1,
                         with: characterAt(index: (indexOf(character: str.last!, array) + 1) % array.count, array))
-
             if indexOf(character: str.last!, array) == 0 {
                 str = String(generateBruteForce(String(str.dropLast()), fromArray: array)) + String(str.last!)
             }
         }
-
         return str
     }
 }
