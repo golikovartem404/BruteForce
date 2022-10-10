@@ -10,6 +10,20 @@ import SnapKit
 
 class MainViewController: UIViewController {
 
+    private var isBlack: Bool = false {
+        didSet {
+            if isBlack {
+                self.view.backgroundColor = .black
+                self.passwordLabel.textColor = .white
+            } else {
+                self.view.backgroundColor = .white
+                self.passwordLabel.textColor = .black
+            }
+        }
+    }
+
+    private var stoppedBruteForce = false
+
     private lazy var passwordLabel: UILabel = {
         let label = UILabel()
         label.numberOfLines = 0
@@ -116,6 +130,48 @@ class MainViewController: UIViewController {
             make.centerY.equalTo(view.snp.centerY).multipliedBy(1.4)
             make.width.equalTo(view.snp.width).multipliedBy(0.9)
         }
+    }
+
+    @objc func reset() {
+        passwordLabel.text = ""
+        passwordLabel.textColor = .black
+        passwordTextField.isSecureTextEntry = true
+        passwordTextField.text = ""
+        stoppedBruteForce = false
+    }
+
+    @objc func startBruteForce() {
+        if passwordTextField.text == "" {
+            let alert = UIAlertController(title: "Error",
+                                          message: "Please write password!",
+                                          preferredStyle: .alert)
+            let actionOK = UIAlertAction(title: "Ok",
+                                         style: .default,
+                                         handler: nil)
+            alert.addAction(actionOK)
+            present(alert, animated: true)
+        } else {
+            if let password = passwordTextField.text {
+                let queue = DispatchQueue(label: "bruteforce",
+                                          qos: .background,
+                                          attributes: .concurrent)
+                queue.async {
+                    self.bruteForce(passwordToUnlock: password)
+                }
+                self.passwordBruteForceProgress.isHidden = false
+                self.passwordBruteForceProgress.startAnimating()
+            }
+        }
+    }
+
+    @objc func stopBruteForce() {
+        stoppedBruteForce = true
+        self.passwordBruteForceProgress.isHidden = true
+        self.passwordBruteForceProgress.stopAnimating()
+    }
+
+    @objc func changeColor() {
+        isBlack.toggle()
     }
 
     func bruteForce(passwordToUnlock: String) {
