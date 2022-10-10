@@ -10,19 +10,31 @@ import SnapKit
 
 class MainViewController: UIViewController {
 
+    // MARK: - Properties
+
     private var isBlack: Bool = false {
         didSet {
             if isBlack {
                 self.view.backgroundColor = .black
                 self.passwordLabel.textColor = .white
+                self.resetButton.setTitleColor(UIColor.white, for: .normal)
+                self.startBruteForceButton.setTitleColor(UIColor.white, for: .normal)
+                self.stopBruteForceButton.setTitleColor(UIColor.white, for: .normal)
+                self.changeBackgroundColorButton.setTitleColor(UIColor.white, for: .normal)
             } else {
                 self.view.backgroundColor = .white
                 self.passwordLabel.textColor = .black
+                self.resetButton.setTitleColor(UIColor.black, for: .normal)
+                self.startBruteForceButton.setTitleColor(UIColor.black, for: .normal)
+                self.stopBruteForceButton.setTitleColor(UIColor.black, for: .normal)
+                self.changeBackgroundColorButton.setTitleColor(UIColor.black, for: .normal)
             }
         }
     }
 
     private var stoppedBruteForce = false
+
+    // MARK: - Outlets
 
     private lazy var passwordLabel: UILabel = {
         let label = UILabel()
@@ -39,6 +51,7 @@ class MainViewController: UIViewController {
         textfield.isSecureTextEntry = true
         textfield.borderStyle = .roundedRect
         textfield.returnKeyType = .done
+        textfield.delegate = self
         return textfield
     }()
 
@@ -51,7 +64,7 @@ class MainViewController: UIViewController {
     private lazy var resetButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Reset", for: .normal)
-        button.setTitleColor(UIColor.systemBlue, for:   .normal)
+        button.setTitleColor(UIColor.black, for:   .normal)
         button.addTarget(self, action: #selector(reset), for: .touchUpInside)
         return button
     }()
@@ -59,7 +72,7 @@ class MainViewController: UIViewController {
     private lazy var startBruteForceButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Start", for: .normal)
-        button.setTitleColor(UIColor.systemBlue, for: .normal)
+        button.setTitleColor(UIColor.black, for: .normal)
         button.addTarget(self, action: #selector(startBruteForce), for: .touchUpInside)
         return button
     }()
@@ -67,7 +80,7 @@ class MainViewController: UIViewController {
     private lazy var stopBruteForceButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Stop", for: .normal)
-        button.setTitleColor(UIColor.systemBlue, for: .normal)
+        button.setTitleColor(UIColor.black, for: .normal)
         button.addTarget(self, action: #selector(stopBruteForce), for: .touchUpInside)
         return button
     }()
@@ -75,7 +88,7 @@ class MainViewController: UIViewController {
     private lazy var changeBackgroundColorButton: UIButton = {
         let button = UIButton(type: .system)
         button.setTitle("Change color", for: .normal)
-        button.setTitleColor(UIColor.systemBlue, for: .normal)
+        button.setTitleColor(UIColor.black, for: .normal)
         button.addTarget(self, action: #selector(changeColor), for: .touchUpInside)
         return button
     }()
@@ -88,12 +101,16 @@ class MainViewController: UIViewController {
         return stack
     }()
 
+    // MARK: - Lifecycle
+
     override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = .white
         setupHierarchy()
         setupLayout()
     }
+
+    // MARK: - View Setups
 
     private func setupHierarchy() {
         view.addSubview(passwordLabel)
@@ -135,6 +152,8 @@ class MainViewController: UIViewController {
             make.width.equalTo(view.snp.width).multipliedBy(0.9)
         }
     }
+
+    // MARK: - Actions for buttons
 
     @objc private func reset() {
         passwordLabel.text = ""
@@ -178,6 +197,8 @@ class MainViewController: UIViewController {
         isBlack.toggle()
     }
 
+    // MARK: - BruteForce method functions
+
     private func bruteForce(passwordToUnlock: String) {
 
         let ALLOWED_CHARACTERS: [String] = String().printable.map { String($0) }
@@ -186,13 +207,13 @@ class MainViewController: UIViewController {
         while password != passwordToUnlock {
             if stoppedBruteForce {
                 DispatchQueue.main.async {
-                    self.passwordLabel.text = "Password \n\(self.passwordTextField.text ?? "")\n not found"
+                    let failedText = "Password \n\(self.passwordTextField.text ?? "")\n not hacked"
+                    self.passwordLabel.text = failedText
                     self.passwordLabel.textColor = .systemRed
                 }
                 break
             }
             password = generateBruteForce(password, fromArray: ALLOWED_CHARACTERS)
-            print(password)
             DispatchQueue.main.async {
                 self.passwordLabel.text = password
             }
@@ -200,7 +221,8 @@ class MainViewController: UIViewController {
 
         if !stoppedBruteForce {
             DispatchQueue.main.async {
-                self.passwordLabel.text = "Password is found:\n\(password)"
+                let successText = "Password is found:\n\(password)"
+                self.passwordLabel.text = successText
                 self.passwordLabel.textColor = .systemGreen
                 self.passwordTextField.isSecureTextEntry = false
                 self.passwordBruteForceProgress.isHidden = true
@@ -232,5 +254,12 @@ class MainViewController: UIViewController {
             }
         }
         return str
+    }
+}
+
+extension MainViewController: UITextFieldDelegate {
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        self.view.endEditing(true)
+        return false
     }
 }
