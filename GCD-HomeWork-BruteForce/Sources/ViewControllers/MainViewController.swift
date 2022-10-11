@@ -203,6 +203,23 @@ class MainViewController: UIViewController {
         isBlack.toggle()
     }
 
+    // MARK: - Change interface method
+
+    func changeInterfaceWhen(password secretKey: String, isHacked: Bool) {
+        if isHacked {
+            let successText = "Password is found:\n\(secretKey)"
+            self.passwordLabel.text = successText
+            self.passwordLabel.textColor = .systemGreen
+            self.passwordTextField.isSecureTextEntry = false
+            self.passwordBruteForceProgress.isHidden = true
+            self.passwordBruteForceProgress.stopAnimating()
+        } else {
+            let failureText = "Password \n\(secretKey)\n not hacked"
+            self.passwordLabel.text = failureText
+            self.passwordLabel.textColor = .systemRed
+        }
+    }
+
     // MARK: - BruteForce method functions
 
     private func bruteForce(passwordToUnlock: String) {
@@ -213,9 +230,7 @@ class MainViewController: UIViewController {
         while password != passwordToUnlock {
             if stoppedBruteForce {
                 DispatchQueue.main.async {
-                    let failedText = "Password \n\(self.passwordTextField.text ?? "")\n not hacked"
-                    self.passwordLabel.text = failedText
-                    self.passwordLabel.textColor = .systemRed
+                    self.changeInterfaceWhen(password: self.passwordTextField.text ?? "", isHacked: false)
                 }
                 break
             }
@@ -227,12 +242,7 @@ class MainViewController: UIViewController {
 
         if !stoppedBruteForce {
             DispatchQueue.main.async {
-                let successText = "Password is found:\n\(password)"
-                self.passwordLabel.text = successText
-                self.passwordLabel.textColor = .systemGreen
-                self.passwordTextField.isSecureTextEntry = false
-                self.passwordBruteForceProgress.isHidden = true
-                self.passwordBruteForceProgress.stopAnimating()
+                self.changeInterfaceWhen(password: password, isHacked: true)
             }
         }
     }
