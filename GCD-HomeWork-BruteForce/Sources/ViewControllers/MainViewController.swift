@@ -165,19 +165,25 @@ class MainViewController: UIViewController {
 
     @objc private func startBruteForce() {
         if passwordTextField.text == "" {
-            let alert = UIAlertController(title: "Error",
-                                          message: "Please write password!",
-                                          preferredStyle: .alert)
-            let actionOK = UIAlertAction(title: "Ok",
-                                         style: .default,
-                                         handler: nil)
+            let alert = UIAlertController(
+                title: "Error",
+                message: "Please write password!",
+                preferredStyle: .alert
+            )
+            let actionOK = UIAlertAction(
+                title: "Ok",
+                style: .default,
+                handler: nil
+            )
             alert.addAction(actionOK)
             present(alert, animated: true)
         } else {
             if let password = passwordTextField.text {
-                let queue = DispatchQueue(label: "bruteforce",
-                                          qos: .background,
-                                          attributes: .concurrent)
+                let queue = DispatchQueue(
+                    label: "bruteforce",
+                    qos: .background,
+                    attributes: .concurrent
+                )
                 queue.async {
                     self.bruteForce(passwordToUnlock: password)
                 }
@@ -201,7 +207,7 @@ class MainViewController: UIViewController {
 
     private func bruteForce(passwordToUnlock: String) {
 
-        let ALLOWED_CHARACTERS: [String] = String().printable.map { String($0) }
+        let allowedCharacters: [String] = String().printable.map { String($0) }
         var password: String = ""
 
         while password != passwordToUnlock {
@@ -213,7 +219,7 @@ class MainViewController: UIViewController {
                 }
                 break
             }
-            password = generateBruteForce(password, fromArray: ALLOWED_CHARACTERS)
+            password = generateBruteForce(password, fromArray: allowedCharacters)
             DispatchQueue.main.async {
                 self.passwordLabel.text = password
             }
@@ -242,18 +248,18 @@ class MainViewController: UIViewController {
 
     private func generateBruteForce(_ string: String, fromArray array: [String]) -> String {
 
-        var str: String = string
+        var initialPasswordString: String = string
 
-        if str.count <= 0 {
-            str.append(characterAt(index: 0, array))
+        if initialPasswordString.count <= 0 {
+            initialPasswordString.append(characterAt(index: 0, array))
         } else {
-            str.replace(at: str.count - 1,
-                        with: characterAt(index: (indexOf(character: str.last!, array) + 1) % array.count, array))
-            if indexOf(character: str.last!, array) == 0 {
-                str = String(generateBruteForce(String(str.dropLast()), fromArray: array)) + String(str.last!)
+            initialPasswordString.replace(at: initialPasswordString.count - 1,
+                                          with: characterAt(index: (indexOf(character: initialPasswordString.last ?? Character(""), array) + 1) % array.count, array))
+            if indexOf(character: initialPasswordString.last ?? Character(""), array) == 0 {
+                initialPasswordString = String(generateBruteForce(String(initialPasswordString.dropLast()), fromArray: array)) + String(initialPasswordString.last ?? Character(""))
             }
         }
-        return str
+        return initialPasswordString
     }
 }
 
